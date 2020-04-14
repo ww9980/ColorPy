@@ -16,7 +16,7 @@ Functions:
 init () -
     Initialize CIE Illuminant D65.  This runs on module startup.
 
-get_illuminant_D65 () -
+get_illuminant_D65 () - 
     Get CIE Illuminant D65, as a spectrum, normalized to Y = 1.0.
 
     CIE standard illuminant D65 represents a phase of natural daylight
@@ -24,20 +24,20 @@ get_illuminant_D65 () -
 
     In the interest of standardization the CIE recommends that D65 be used
     whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
-
+    
     (ColorPy does not currently provide D55 or D75, however.)
 
-get_illuminant_A () -
+get_illuminant_A () - 
     Get CIE Illuminant A, as a spectrum, normalized to Y = 1.0.
     This is actually a blackbody illuminant for T = 2856 K.  (Wyszecki, p. 143)
 
-get_blackbody_illuminant (T_K) -
+get_blackbody_illuminant (T_K) - 
     Get the spectrum of a blackbody at the given temperature, normalized to Y = 1.0.
 
 get_constant_illuminant () -
     Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.
 
-scale_illuminant (illuminant, scaling) -
+scale_illuminant (illuminant, scaling) - 
     Scale the illuminant intensity by the specfied factor.
 
 References:
@@ -50,7 +50,7 @@ CVRL Color and Vision Database - http://cvrl.ioo.ucl.ac.uk/index.htm - (accessed
     Provides a set of data sets related to color vision.
     ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,
     and for Illuminant D65, both at 1 nm wavelength increments.
-
+    
 CIE Standards - http://cvrl.ioo.ucl.ac.uk/cie.htm - (accessed 17 Sep 2008)
     CIE standards as maintained by CVRL.
     The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the following files, linked here:
@@ -88,9 +88,12 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
-import ciexyz
-import blackbody
-import plots
+import math, numpy
+
+from . import colormodels
+from . import ciexyz
+from . import blackbody
+from . import plots
 
 # table of CIE Illuminant D65 spectrum.
 # data from: http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt
@@ -633,7 +636,9 @@ _Illuminant_D65 = None
 
 def init ():
     '''Initialize CIE Illuminant D65.  This runs on module startup.'''
+    table_size = len (_Illuminant_D65_table)
     first_wl = _Illuminant_D65_table [0][0]
+    last_wl  = _Illuminant_D65_table [-1][0]
     # for now, only consider the part in the normal visible range (360-830 nm)
     first_index = ciexyz.start_wl_nm - first_wl
     table_first = _Illuminant_D65_table [first_index][0]
@@ -661,7 +666,7 @@ def get_illuminant_D65 ():
 
     In the interest of standardization the CIE recommends that D65 be used
     whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
-
+    
     (ColorPy does not currently provide D55 or D75, however.)'''
     illuminant = _Illuminant_D65.copy()
     return illuminant
@@ -685,7 +690,7 @@ def get_constant_illuminant ():
     '''Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.'''
     illuminant = ciexyz.empty_spectrum()
     (num_wl, num_cols) = illuminant.shape
-    for i in range (0, num_wl):
+    for i in xrange (0, num_wl):
         illuminant [i][1] = 1.0
     xyz = ciexyz.xyz_from_spectrum (illuminant)
     if xyz [1] != 0.0:

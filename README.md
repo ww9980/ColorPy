@@ -1,6 +1,12 @@
 ColorPy
 =======
 
+
+This repo is an updated version for Python 3.7+
+Changing `import blackbody` to `from . import blackbody`
+And using python 3 style print and raise.
+
+
 Physical color calculations in Python.
 
 More documentation is currently at http://markkness.net/colorpy/ColorPy.html.

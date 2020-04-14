@@ -31,7 +31,7 @@ DEFAULT_DISPLAY_INTENSITY - Default assumed intensity of monitor display, in W/m
 def init (monitor_intensity = DEFAULT_DISPLAY_INTENSITY) -
     Initialization of color matching curves.  Called at module startup with default arguments.
     This can be called again to change the assumed display intensity.
-
+    
 def empty_spectrum () -
     Get a black (no intensity) ColorPy spectrum.
 
@@ -42,10 +42,10 @@ def empty_spectrum () -
 
     The result can be passed to xyz_from_spectrum() to convert to an xyz color.
 
-def xyz_from_wavelength (wl_nm) -
+def xyz_from_wavelength (wl_nm) - 
     Given a wavelength (nm), return the corresponding xyz color, for unit intensity.
-
-def xyz_from_spectrum (spectrum) -
+    
+def xyz_from_spectrum (spectrum) - 
     Determine the xyz color of the spectrum.
 
     The spectrum is assumed to be a 2D numpy array, with a row for each wavelength,
@@ -64,7 +64,7 @@ def get_normalized_spectral_line_colors (
     brightness - Desired maximum rgb component of each color.  Default 1.0.  (Maxiumum displayable brightness)
     num_purples - Number of colors to interpolate in the 'purple' range.  Default 0.  (No purples)
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
-
+    
 References:
 
 Wyszecki and Stiles, Color Science: Concepts and Methods, Quantitative Data and Formulae,
@@ -75,7 +75,7 @@ CVRL Color and Vision Database - http://cvrl.ioo.ucl.ac.uk/index.htm - (accessed
     Provides a set of data sets related to color vision.
     ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,
     and for Illuminant D65, both at 1 nm wavelength increments.
-
+    
 CIE Standards - http://cvrl.ioo.ucl.ac.uk/cie.htm - (accessed 17 Sep 2008)
     CIE standards as maintained by CVRL.
     The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the following files, linked here:
@@ -118,7 +118,7 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import math, numpy
 
-import colormodels
+from . import colormodels
 
 # Assumed physical brightness of the monitor [W/m^2]
 #   80 cd/m^2 * 20.3 mW/cd (assuming light at 556 nm)
@@ -127,7 +127,7 @@ DEFAULT_DISPLAY_INTENSITY = 1.624
 # For reference, the physical luminance of several interesting objects ...
 # All values in cd/m^2, where 1 cd = 1 candle = 20.3 milliwatts of light at 5560 A
 # Typical monitor at full blast = 80 cd/m^2  [Poynton, Color FAQ, p.4]
-# Candle                        = 5000
+# Candle                        = 5000  
 # 40W Frosted Light Bulb        = 25000
 # Clear sky                     = 4000
 # Moon                          = 2500
@@ -653,13 +653,13 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     _wavelengths [create_table_size-1] = end_wl_nm + 1
     _xyz_colors  [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
     # fill in the middle rows from the source data
-    for i in range (0, len (_CIEXYZ_1931_table)):
+    for i in range(0, len (_CIEXYZ_1931_table)):
         (wl,x,y,z) = _CIEXYZ_1931_table [i]
         _wavelengths [i+1] = wl
         _xyz_colors  [i+1] = colormodels.xyz_color (x,y,z)
     # get the integrals of each curve
     integral = numpy.zeros (3)
-    for i in range (0, create_table_size-1):
+    for i in range(0, create_table_size-1):
         d_integral = 0.5 * (_xyz_colors [i] + _xyz_colors [i+1]) * delta_wl_nm
         integral += d_integral
     # scale the sampling curves so that:
@@ -704,7 +704,7 @@ def xyz_from_wavelength (wl_nm):
     if (int_wl_nm < start_wl_nm - 1) or (int_wl_nm > end_wl_nm + 1):
         return colormodels.xyz_color (0.0, 0.0, 0.0)
     # get index into main table
-    index = int(round(int_wl_nm - start_wl_nm + 1))
+    index = int_wl_nm - start_wl_nm + 1
     # apply linear interpolation to get the color
     return _xyz_colors [index] + frac_wl_nm * _xyz_deltas [index]
 
@@ -740,7 +740,7 @@ def get_normalized_spectral_line_colors (
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
     '''
     # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
-    wl_angstrom_range = range (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
+    wl_angstrom_range = xrange (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
     # get total point count
     num_spectral = len (wl_angstrom_range)
     num_points   = num_spectral + num_purples
@@ -756,7 +756,7 @@ def get_normalized_spectral_line_colors (
     # interpolate from end point to start point (filling in the purples)
     first_xyz = xyzs [0]
     last_xyz  = xyzs [num_spectral - 1]
-    for ipurple in range (0, num_purples):
+    for ipurple in xrange (0, num_purples):
         t = float (ipurple) / float (num_purples - 1)
         omt = 1.0 - t
         xyz = t * first_xyz + omt * last_xyz
@@ -764,60 +764,15 @@ def get_normalized_spectral_line_colors (
         xyzs [i] = xyz
         i += 1
     # scale each color to have the max rgb component equal to the desired brightness
-    for i in range (0, num_points):
-        rgb = colormodels.brightest_rgb_from_xyz (xyzs [i], brightness)
+    for i in xrange (0, num_points):
+        rgb = colormodels.rgb_from_xyz (xyzs [i])
+        max_rgb = max (rgb)
+        if max_rgb != 0.0:
+            scale = brightness / max_rgb
+            rgb *= scale
         xyzs [i] = colormodels.xyz_from_rgb (rgb)
     # done
     return xyzs
-
-def get_normalized_spectral_line_colors_annotated (
-    brightness = 1.0,
-    num_purples = 0,
-    dwl_angstroms = 10):
-    '''Get an array of xyz colors covering the visible spectrum.
-    Optionally add a number of 'purples', which are colors interpolated between the color
-    of the lowest wavelength (violet) and the highest (red).
-    A text string describing the color is supplied for each color.
-
-    brightness - Desired maximum rgb component of each color.  Default 1.0.  (Maxiumum displayable brightness)
-    num_purples - Number of colors to interpolate in the 'purple' range.  Default 0.  (No purples)
-    dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
-    '''
-    # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
-    wl_angstrom_range = range (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
-    # get total point count
-    num_spectral = len (wl_angstrom_range)
-    num_points   = num_spectral + num_purples
-    xyzs = numpy.empty ((num_points, 3))
-    names = []
-    # build list of normalized color x,y values proceeding along each wavelength
-    i = 0
-    for wl_A in wl_angstrom_range:
-        wl_nm = wl_A * 0.1
-        xyz = xyz_from_wavelength (wl_nm)
-        colormodels.xyz_normalize (xyz)
-        xyzs [i] = xyz
-        name = '%.1f nm' % wl_nm
-        names.append (name)
-        i += 1
-    # interpolate from end point to start point (filling in the purples)
-    first_xyz = xyzs [0]
-    last_xyz  = xyzs [num_spectral - 1]
-    for ipurple in range (0, num_purples):
-        t = float (ipurple) / float (num_purples - 1)
-        omt = 1.0 - t
-        xyz = t * first_xyz + omt * last_xyz
-        colormodels.xyz_normalize (xyz)
-        xyzs [i] = xyz
-        name = '%03d purple' % math.floor (1000.0 * t + 0.5)
-        names.append (name)
-        i += 1
-    # scale each color to have the max rgb component equal to the desired brightness
-    for i in range (0, num_points):
-        rgb = colormodels.brightest_rgb_from_xyz (xyzs [i], brightness)
-        xyzs [i] = colormodels.xyz_from_rgb (rgb)
-    # done
-    return (xyzs, names)
 
 # Initialize at module startup
 init()
